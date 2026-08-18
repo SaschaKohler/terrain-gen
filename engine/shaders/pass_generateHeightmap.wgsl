@@ -89,6 +89,13 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     h = h / totalAmp;
   }
 
+  // fBm is already signed in [-1, 1]; ridged and billowy are positive-definite
+  // and would otherwise map the texture colour gradient to the upper half only
+  // (snow/white). Bring them to the same signed range before scaling.
+  if (u.noiseType == 1.0 || u.noiseType == 2.0) {
+    h = h * 2.0 - 1.0;
+  }
+
   h = h * u.amplitude;
   h = sign(h) * pow(abs(h), u.power);
 
