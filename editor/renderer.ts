@@ -85,7 +85,7 @@ export function createRenderer(
       },
       {
         binding: 1,
-        visibility: GPUShaderStage.VERTEX,
+        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
         texture: { sampleType: 'unfilterable-float' },
       },
     ],
