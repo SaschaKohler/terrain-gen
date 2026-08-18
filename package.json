@@ -1,0 +1,18 @@
+{
+  "name": "terraforge",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@webgpu/types": "^0.1.60",
+    "typescript": "^5.7.0",
+    "vite": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
