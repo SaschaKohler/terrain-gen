@@ -139,7 +139,7 @@ async function init(): Promise<void> {
 
     const aspect = canvas!.width / canvas!.height;
     updateCamera(camera, aspect, mvp);
-    renderer.updateMvp(mvp, ui.getState().heightScale);
+    renderer.updateMvp(mvp, ui.getState().heightScale, ui.getState().environment);
 
     const state = ui.getState();
     if (state.runErosion) {

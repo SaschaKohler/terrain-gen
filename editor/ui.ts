@@ -4,6 +4,7 @@ export interface UIState {
   noise: NoiseParams;
   erosion: ErosionParams;
   heightScale: number;
+  environment: number;
   runErosion: boolean;
 }
 
@@ -80,6 +81,7 @@ export function createUI(container: HTMLElement): ParameterUI {
       iterations: 50,
     },
     heightScale: 0.5,
+    environment: 0,
     runErosion: false,
   };
 
@@ -127,6 +129,26 @@ export function createUI(container: HTMLElement): ParameterUI {
     { label: 'Height Scale', key: 'heightScale', min: 0.05, max: 2, step: 0.05, value: state.heightScale },
     (v) => { state.heightScale = v; notify(); }
   );
+
+  const envRow = document.createElement('div');
+  envRow.className = 'param-row';
+  const envLabel = document.createElement('label');
+  envLabel.textContent = 'Environment';
+  const envSelect = document.createElement('select');
+  ['Temperate', 'Desert', 'Arctic', 'Martian'].forEach((name, idx) => {
+    const option = document.createElement('option');
+    option.value = String(idx);
+    option.textContent = name;
+    envSelect.appendChild(option);
+  });
+  envSelect.value = String(state.environment);
+  envSelect.addEventListener('change', () => {
+    state.environment = Number(envSelect.value);
+    notify();
+  });
+  envRow.appendChild(envLabel);
+  envRow.appendChild(envSelect);
+  displaySection.appendChild(envRow);
 
   const erosionSection = document.createElement('section');
   const erosionTitle = document.createElement('h3');

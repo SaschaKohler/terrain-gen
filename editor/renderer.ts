@@ -1,7 +1,12 @@
-import { terrainShader } from './shaders';
+import terrainShader from '../engine/shaders/render_terrainTextured.wgsl?raw';
 
 export interface Renderer {
-  updateMvp(mvp: Float32Array, heightScale: number): void;
+  updateMvp(
+    mvp: Float32Array,
+    heightScale: number,
+    envIndex?: number,
+    thresholds?: [number, number, number, number]
+  ): void;
   render(encoder: GPUCommandEncoder, colorView: GPUTextureView, depthView: GPUTextureView): void;
 }
 
@@ -64,6 +69,8 @@ export function createRenderer(
     size: 96,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
+
+  const defaultThresholds: [number, number, number, number] = [0.22, 0.35, 35.0, 0.75];
 
   const shaderModule = device.createShaderModule({
     code: terrainShader,
@@ -130,9 +137,14 @@ export function createRenderer(
   const mvpData = new Float32Array(24);
 
   return {
-    updateMvp(mvp: Float32Array, hs: number) {
+    updateMvp(mvp: Float32Array, hs: number, envIndex = 0, thresholds = defaultThresholds) {
       mvpData.set(mvp, 0);
       mvpData[16] = hs;
+      mvpData[17] = envIndex;
+      mvpData[20] = thresholds[0];
+      mvpData[21] = thresholds[1];
+      mvpData[22] = thresholds[2];
+      mvpData[23] = thresholds[3];
       device.queue.writeBuffer(uniformBuffer, 0, mvpData);
     },
     render(encoder: GPUCommandEncoder, colorView: GPUTextureView, depthView: GPUTextureView) {
