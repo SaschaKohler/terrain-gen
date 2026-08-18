@@ -1,11 +1,10 @@
 import { createEngine, type NoiseParams } from '../engine/index';
-import { createRenderer } from './renderer';
+import { createRenderer, type Renderer } from './renderer';
 import { createDefaultCamera, updateCamera } from './camera';
 import { createMat4 } from './math';
 import { createUI } from './ui';
 
-const HEIGHTMAP_SIZE = 256;
-const MESH_SIZE = 255;
+
 
 function createDepthTexture(device: GPUDevice, width: number, height: number): GPUTexture {
   return device.createTexture({
@@ -48,17 +47,6 @@ async function init(): Promise<void> {
     alphaMode: 'premultiplied',
   });
 
-  const engine = createEngine();
-  engine.init(device, { width: HEIGHTMAP_SIZE, height: HEIGHTMAP_SIZE });
-
-  const renderer = createRenderer(
-    device,
-    MESH_SIZE,
-    canvasFormat,
-    0.5,
-    engine.getHeightmapTexture()
-  );
-
   const camera = createDefaultCamera();
   const mvp = createMat4();
 
@@ -67,6 +55,35 @@ async function init(): Promise<void> {
     throw new Error('UI container not found.');
   }
   const ui = createUI(uiContainer);
+
+  let engine = createEngine();
+  let renderer: Renderer | undefined;
+  let currentSize = 0;
+  let noiseParams: NoiseParams = { ...ui.getState().noise };
+
+  const regenerate = (): void => {
+    const state = ui.getState();
+    noiseParams = { ...state.noise };
+    engine.generateHeightmap(noiseParams.seed, noiseParams);
+  };
+
+  const setupTerrain = (size: number): void => {
+    currentSize = size;
+    engine.destroy();
+    renderer?.destroy();
+    engine = createEngine();
+    engine.init(device, { width: size, height: size });
+    renderer = createRenderer(
+      device,
+      size - 1,
+      canvasFormat,
+      ui.getState().heightScale,
+      engine.getHeightmapTexture()
+    );
+    regenerate();
+  };
+
+  setupTerrain(ui.getState().heightmapSize);
 
   let depthTexture = createDepthTexture(device, canvas.clientWidth, canvas.clientHeight);
 
@@ -111,16 +128,12 @@ async function init(): Promise<void> {
     { passive: false }
   );
 
-  let noiseParams: NoiseParams = { ...ui.getState().noise };
-
-  const regenerate = (): void => {
-    const state = ui.getState();
-    noiseParams = { ...state.noise };
-    engine.generateHeightmap(noiseParams.seed, noiseParams);
-  };
-
   ui.onChange(() => {
     const state = ui.getState();
+    if (state.heightmapSize !== currentSize) {
+      setupTerrain(state.heightmapSize);
+      return;
+    }
     if (
       state.noise.frequency !== noiseParams.frequency ||
       state.noise.octaves !== noiseParams.octaves ||
@@ -131,15 +144,13 @@ async function init(): Promise<void> {
     }
   });
 
-  regenerate();
-
   function frame(): void {
     const currentTexture = context!.getCurrentTexture();
     const colorView = currentTexture.createView();
 
     const aspect = canvas!.width / canvas!.height;
     updateCamera(camera, aspect, mvp);
-    renderer.updateMvp(mvp, ui.getState().heightScale, ui.getState().environment);
+    renderer!.updateMvp(mvp, ui.getState().heightScale, ui.getState().environment);
 
     const state = ui.getState();
     if (state.runErosion) {
@@ -147,7 +158,7 @@ async function init(): Promise<void> {
     }
 
     const encoder = device.createCommandEncoder();
-    renderer.render(encoder, colorView, depthTexture.createView());
+    renderer!.render(encoder, colorView, depthTexture.createView());
     device.queue.submit([encoder.finish()]);
 
     requestAnimationFrame(frame);

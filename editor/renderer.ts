@@ -8,6 +8,7 @@ export interface Renderer {
     thresholds?: [number, number, number, number]
   ): void;
   render(encoder: GPUCommandEncoder, colorView: GPUTextureView, depthView: GPUTextureView): void;
+  destroy(): void;
 }
 
 export function createRenderer(
@@ -170,6 +171,11 @@ export function createRenderer(
       pass.setBindGroup(0, bindGroup);
       pass.drawIndexed(indices.length);
       pass.end();
+    },
+    destroy() {
+      vertexBuffer.destroy();
+      indexBuffer.destroy();
+      uniformBuffer.destroy();
     },
   };
 }

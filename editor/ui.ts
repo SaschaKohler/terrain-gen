@@ -5,6 +5,7 @@ export interface UIState {
   erosion: ErosionParams;
   heightScale: number;
   environment: number;
+  heightmapSize: number;
   runErosion: boolean;
 }
 
@@ -82,6 +83,7 @@ export function createUI(container: HTMLElement): ParameterUI {
     },
     heightScale: 0.5,
     environment: 0,
+    heightmapSize: 256,
     runErosion: false,
   };
 
@@ -149,6 +151,26 @@ export function createUI(container: HTMLElement): ParameterUI {
   envRow.appendChild(envLabel);
   envRow.appendChild(envSelect);
   displaySection.appendChild(envRow);
+
+  const resRow = document.createElement('div');
+  resRow.className = 'param-row';
+  const resLabel = document.createElement('label');
+  resLabel.textContent = 'Resolution';
+  const resSelect = document.createElement('select');
+  [64, 128, 256, 512, 1024].forEach((size) => {
+    const option = document.createElement('option');
+    option.value = String(size);
+    option.textContent = `${size} x ${size}`;
+    resSelect.appendChild(option);
+  });
+  resSelect.value = String(state.heightmapSize);
+  resSelect.addEventListener('change', () => {
+    state.heightmapSize = Number(resSelect.value);
+    notify();
+  });
+  resRow.appendChild(resLabel);
+  resRow.appendChild(resSelect);
+  displaySection.appendChild(resRow);
 
   const erosionSection = document.createElement('section');
   const erosionTitle = document.createElement('h3');
