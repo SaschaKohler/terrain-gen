@@ -5,7 +5,7 @@ import { createMat4 } from './math';
 import { createUI } from './ui';
 
 const HEIGHTMAP_SIZE = 256;
-const MESH_SIZE = 128;
+const MESH_SIZE = 255;
 
 function createDepthTexture(device: GPUDevice, width: number, height: number): GPUTexture {
   return device.createTexture({
