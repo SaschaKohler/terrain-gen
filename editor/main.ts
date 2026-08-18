@@ -138,7 +138,13 @@ async function init(): Promise<void> {
       state.noise.frequency !== noiseParams.frequency ||
       state.noise.octaves !== noiseParams.octaves ||
       state.noise.amplitude !== noiseParams.amplitude ||
-      state.noise.seed !== noiseParams.seed
+      state.noise.seed !== noiseParams.seed ||
+      state.noise.persistence !== noiseParams.persistence ||
+      state.noise.lacunarity !== noiseParams.lacunarity ||
+      state.noise.offsetX !== noiseParams.offsetX ||
+      state.noise.offsetY !== noiseParams.offsetY ||
+      state.noise.power !== noiseParams.power ||
+      state.noise.noiseType !== noiseParams.noiseType
     ) {
       regenerate();
     }

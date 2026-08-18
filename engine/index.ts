@@ -8,6 +8,12 @@ export interface NoiseParams {
   frequency: number;
   octaves: number;
   amplitude: number;
+  persistence: number;
+  lacunarity: number;
+  offsetX: number;
+  offsetY: number;
+  power: number;
+  noiseType: number;
 }
 
 export interface ErosionParams {

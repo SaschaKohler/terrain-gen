@@ -27,7 +27,7 @@ function createNumberControl(
   container: HTMLElement,
   spec: ParamSpec,
   onChange: (value: number) => void
-): HTMLInputElement {
+): { input: HTMLInputElement; setValue: (value: number) => void } {
   const row = document.createElement('div');
   row.className = 'param-row';
 
@@ -62,7 +62,7 @@ function createNumberControl(
   row.appendChild(number);
   container.appendChild(row);
 
-  return number;
+  return { input: number, setValue: update };
 }
 
 export function createUI(container: HTMLElement): ParameterUI {
@@ -72,6 +72,12 @@ export function createUI(container: HTMLElement): ParameterUI {
       frequency: 4,
       octaves: 6,
       amplitude: 1,
+      persistence: 0.5,
+      lacunarity: 2.0,
+      offsetX: 0.0,
+      offsetY: 0.0,
+      power: 1.0,
+      noiseType: 0,
     },
     erosion: {
       rainAmount: 0.01,
@@ -104,6 +110,11 @@ export function createUI(container: HTMLElement): ParameterUI {
   noiseSection.appendChild(noiseTitle);
   panel.appendChild(noiseSection);
 
+  const seedControl = createNumberControl(
+    noiseSection,
+    { label: 'Seed', key: 'seed', min: 0, max: 1000000, step: 1, value: state.noise.seed },
+    (v) => { state.noise.seed = v; notify(); }
+  );
   createNumberControl(
     noiseSection,
     { label: 'Frequency', key: 'frequency', min: 0.1, max: 16, step: 0.1, value: state.noise.frequency },
@@ -119,6 +130,51 @@ export function createUI(container: HTMLElement): ParameterUI {
     { label: 'Amplitude', key: 'amplitude', min: 0.1, max: 4, step: 0.1, value: state.noise.amplitude },
     (v) => { state.noise.amplitude = v; notify(); }
   );
+  createNumberControl(
+    noiseSection,
+    { label: 'Persistence', key: 'persistence', min: 0.0, max: 1.0, step: 0.05, value: state.noise.persistence },
+    (v) => { state.noise.persistence = v; notify(); }
+  );
+  createNumberControl(
+    noiseSection,
+    { label: 'Lacunarity', key: 'lacunarity', min: 1.0, max: 8.0, step: 0.1, value: state.noise.lacunarity },
+    (v) => { state.noise.lacunarity = v; notify(); }
+  );
+  createNumberControl(
+    noiseSection,
+    { label: 'Offset X', key: 'offsetX', min: -1.0, max: 1.0, step: 0.01, value: state.noise.offsetX },
+    (v) => { state.noise.offsetX = v; notify(); }
+  );
+  createNumberControl(
+    noiseSection,
+    { label: 'Offset Y', key: 'offsetY', min: -1.0, max: 1.0, step: 0.01, value: state.noise.offsetY },
+    (v) => { state.noise.offsetY = v; notify(); }
+  );
+  createNumberControl(
+    noiseSection,
+    { label: 'Power', key: 'power', min: 0.1, max: 4.0, step: 0.1, value: state.noise.power },
+    (v) => { state.noise.power = v; notify(); }
+  );
+
+  const typeRow = document.createElement('div');
+  typeRow.className = 'param-row';
+  const typeLabel = document.createElement('label');
+  typeLabel.textContent = 'Noise Type';
+  const typeSelect = document.createElement('select');
+  ['fBm', 'Ridged', 'Billowy'].forEach((name, idx) => {
+    const option = document.createElement('option');
+    option.value = String(idx);
+    option.textContent = name;
+    typeSelect.appendChild(option);
+  });
+  typeSelect.value = String(state.noise.noiseType);
+  typeSelect.addEventListener('change', () => {
+    state.noise.noiseType = Number(typeSelect.value);
+    notify();
+  });
+  typeRow.appendChild(typeLabel);
+  typeRow.appendChild(typeSelect);
+  noiseSection.appendChild(typeRow);
 
   const displaySection = document.createElement('section');
   const displayTitle = document.createElement('h3');
@@ -232,10 +288,9 @@ export function createUI(container: HTMLElement): ParameterUI {
 
   const regenButton = document.createElement('button');
   regenButton.id = 'regenerate';
-  regenButton.textContent = 'Regenerate';
+  regenButton.textContent = 'Random Seed';
   regenButton.addEventListener('click', () => {
-    state.noise.seed = Math.random() * 1000000;
-    notify();
+    seedControl.setValue(Math.random() * 1000000);
   });
   actions.appendChild(regenButton);
 

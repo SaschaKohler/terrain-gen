@@ -1,6 +1,7 @@
 // pass_generateHeightmap.wgsl
 // Fills the terrainHeight texture with multi-octave 2D Perlin-style noise.
-// Uniforms provide seed, base frequency, octave count and overall amplitude.
+// Supports fBm, ridged and billowy fractal types with tunable persistence,
+// lacunarity, 2D offset and a post-exponent (power).
 // Output is an r32float storage texture; values range ~[-amplitude, amplitude].
 
 struct Params {
@@ -10,8 +11,16 @@ struct Params {
   amplitude: f32,
   width: f32,
   height: f32,
+  persistence: f32,
+  lacunarity: f32,
+  offsetX: f32,
+  offsetY: f32,
+  power: f32,
+  noiseType: f32,
   pad0: f32,
   pad1: f32,
+  pad2: f32,
+  pad3: f32,
 };
 
 @group(0) @binding(0) var<uniform> u: Params;
@@ -59,15 +68,29 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
   let uv = vec2<f32>(f32(global_id.x) / u.width, f32(global_id.y) / u.height);
   var h: f32 = 0.0;
+  var totalAmp: f32 = 0.0;
   let octaves = i32(u.octaves);
 
   for (var o: i32 = 0; o < octaves; o = o + 1i) {
-    let freq = u.frequency * pow(2.0, f32(o));
-    let amp = pow(0.5, f32(o));
-    h = h + perlin(uv * freq, u.seed) * amp;
+    let freq = u.frequency * pow(u.lacunarity, f32(o));
+    let amp = pow(u.persistence, f32(o));
+    var n = perlin((uv + vec2<f32>(u.offsetX, u.offsetY)) * freq, u.seed);
+    if (u.noiseType == 1.0) {
+      n = 1.0 - abs(n);
+      n = n * n;
+    } else if (u.noiseType == 2.0) {
+      n = abs(n);
+    }
+    h = h + n * amp;
+    totalAmp = totalAmp + amp;
+  }
+
+  if (totalAmp > 0.0) {
+    h = h / totalAmp;
   }
 
   h = h * u.amplitude;
+  h = sign(h) * pow(abs(h), u.power);
 
   textureStore(
     outHeight,

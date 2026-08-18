@@ -3,7 +3,7 @@
 import type { NoiseParams, ErosionParams, TerrainEngine } from '../index';
 import generateHeightmapWGSL from '../shaders/pass_generateHeightmap.wgsl?raw';
 
-const PARAMS_SIZE = 32;
+const PARAMS_SIZE = 64;
 
 export function createTerrainEngine(): TerrainEngine {
   return new TerrainEngineImpl();
@@ -108,6 +108,14 @@ class TerrainEngineImpl implements TerrainEngine {
       params.amplitude,
       this.width,
       this.height,
+      params.persistence,
+      params.lacunarity,
+      params.offsetX,
+      params.offsetY,
+      params.power,
+      params.noiseType,
+      0.0,
+      0.0,
       0.0,
       0.0,
     ]);
